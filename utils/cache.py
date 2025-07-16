@@ -99,7 +99,16 @@ def cache(ttl: int = None, prefix: str = None):
                     if return_type and hasattr(return_type, '__name__') and return_type.__name__ == 'StandardResponse':
                         from models.response.StandardResponse import StandardResponse
                         # Reconstruct StandardResponse object
-                        return StandardResponse(**data)
+                        if isinstance(data, dict):
+                            return StandardResponse(**data)
+                        elif isinstance(data, str):
+                            # Handle case where data is a string
+                            logger.debug(f"Converting string data to dict for StandardResponse")
+                            return StandardResponse(data={"response": data}, status="success", message=None)
+                        else:
+                            # For other types, create a default StandardResponse
+                            logger.warning(f"Unexpected data type in cache: {type(data)}")
+                            return StandardResponse(data={"cached_value": data}, status="success", message=None)
                     else:
                         # For other return types, just return the deserialized JSON
                         return data
@@ -157,7 +166,16 @@ def cache(ttl: int = None, prefix: str = None):
                     if return_type and hasattr(return_type, '__name__') and return_type.__name__ == 'StandardResponse':
                         from models.response.StandardResponse import StandardResponse
                         # Reconstruct StandardResponse object
-                        return StandardResponse(**data)
+                        if isinstance(data, dict):
+                            return StandardResponse(**data)
+                        elif isinstance(data, str):
+                            # Handle case where data is a string
+                            logger.debug(f"Converting string data to dict for StandardResponse")
+                            return StandardResponse(data={"response": data}, status="success", message=None)
+                        else:
+                            # For other types, create a default StandardResponse
+                            logger.warning(f"Unexpected data type in cache: {type(data)}")
+                            return StandardResponse(data={"cached_value": data}, status="success", message=None)
                     else:
                         # For other return types, just return the deserialized JSON
                         return data
