@@ -41,12 +41,8 @@ pipeline {
 
                     if (lastCommitMessage =~ ignoreMessagePattern || lastCommitAuthor == ignoreAuthor) {
                         echo "Skipping build due to ignored commit message or author."
-                        // You might want to terminate the pipeline here, e.g.,
-                        // currentBuild.result = 'NOT_BUILT' // Requires "Build Disabler Plugin" or similar
-                        // You can also use "error('Skipping build')" to mark it as failed,
-                        // or simply exit the script if you don't need further processing.
-                        // A cleaner way is to use 'when' or 'options' to prevent the entire pipeline from running
-                        // based on these conditions.
+                        currentBuild.result = 'ABORTED'
+                        currentBuild.description = 'Skipped bot push'
                     } else {
                         checkout scm // Only checkout if not to be skipped
                     }
