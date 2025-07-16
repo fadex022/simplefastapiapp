@@ -26,7 +26,7 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
+        stage('Pre-check') {
             steps {
                 script {
                     // Get the last commit message
@@ -43,10 +43,13 @@ pipeline {
                         echo "Skipping build due to ignored commit message or author."
                         currentBuild.result = 'ABORTED'
                         currentBuild.description = 'Skipped bot push'
-                    } else {
-                        checkout scm // Only checkout if not to be skipped
                     }
                 }
+            }
+        }
+        stage('Checkout') {
+            steps {
+                checkout scm
             }
         }
 
