@@ -28,7 +28,29 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                script {
+                    // Get the last commit message
+                    def lastCommitMessage = sh(script: 'git log -1 --pretty=%B', returnStdout: true).trim()
+
+                    // Get the last commit author
+                    def lastCommitAuthor = sh(script: 'git log -1 --pretty=%an', returnStdout: true).trim()
+
+                    // Define patterns for messages/authors to ignore
+                    def ignoreMessagePattern = /\[skip ci\]/
+                    def ignoreAuthor = 'Jenkins'
+
+                    if (lastCommitMessage =~ ignoreMessagePattern || lastCommitAuthor == ignoreAuthor) {
+                        echo "Skipping build due to ignored commit message or author."
+                        // You might want to terminate the pipeline here, e.g.,
+                        // currentBuild.result = 'NOT_BUILT' // Requires "Build Disabler Plugin" or similar
+                        // You can also use "error('Skipping build')" to mark it as failed,
+                        // or simply exit the script if you don't need further processing.
+                        // A cleaner way is to use 'when' or 'options' to prevent the entire pipeline from running
+                        // based on these conditions.
+                    } else {
+                        checkout scm // Only checkout if not to be skipped
+                    }
+                }
             }
         }
 
