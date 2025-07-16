@@ -6,7 +6,7 @@ authors = [
     {name = "Fadel Bidiga",email = "bidigafadel@gmail.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12.3"
 dependencies = [
     "annotated-types (==0.7.0)",
     "anyio (==4.9.0)",

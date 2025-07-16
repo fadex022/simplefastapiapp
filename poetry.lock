@@ -27,6 +27,7 @@ files = [
 [package.dependencies]
 idna = ">=2.8"
 sniffio = ">=1.1"
+typing_extensions = {version = ">=4.5", markers = "python_version < \"3.13\""}
 
 [package.extras]
 doc = ["Sphinx (>=8.2,<9.0)", "packaging", "sphinx-autodoc-typehints (>=1.2.0)", "sphinx_rtd_theme"]
@@ -300,7 +301,7 @@ description = "Lightweight in-process concurrent programming"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
-markers = "python_version == \"3.13\" and (platform_machine == \"aarch64\" or platform_machine == \"ppc64le\" or platform_machine == \"x86_64\" or platform_machine == \"amd64\" or platform_machine == \"AMD64\" or platform_machine == \"win32\" or platform_machine == \"WIN32\")"
+markers = "python_version < \"3.14\" and (platform_machine == \"aarch64\" or platform_machine == \"ppc64le\" or platform_machine == \"x86_64\" or platform_machine == \"amd64\" or platform_machine == \"AMD64\" or platform_machine == \"win32\" or platform_machine == \"WIN32\")"
 files = [
     {file = "greenlet-3.2.3-cp310-cp310-macosx_11_0_universal2.whl", hash = "sha256:1afd685acd5597349ee6d7a88a8bec83ce13c106ac78c196ee9dde7c04fe87be"},
     {file = "greenlet-3.2.3-cp310-cp310-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:761917cac215c61e9dc7324b2606107b3b292a8349bdebb31503ab4de3f559ac"},
@@ -550,7 +551,10 @@ files = [
 
 [package.dependencies]
 googleapis-common-protos = ">=1.57,<2.0"
-grpcio = {version = ">=1.66.2,<2.0.0", markers = "python_version >= \"3.13\""}
+grpcio = [
+    {version = ">=1.63.2,<2.0.0", markers = "python_version < \"3.13\""},
+    {version = ">=1.66.2,<2.0.0", markers = "python_version >= \"3.13\""},
+]
 opentelemetry-api = ">=1.15,<2.0"
 opentelemetry-exporter-otlp-proto-common = "1.35.0"
 opentelemetry-proto = "1.35.0"
@@ -1297,5 +1301,5 @@ type = ["pytest-mypy"]
 
 [metadata]
 lock-version = "2.1"
-python-versions = ">=3.13"
-content-hash = "3465367366d888246a28911f27f1d43e242309f1700853ba7b23207e067fba7f"
+python-versions = ">=3.12.3"
+content-hash = "a12f9207d7d144d51934bd043ee219852fe314fc3857fed8ea46b3e1435d92f7"
