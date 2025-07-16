@@ -12,10 +12,10 @@ from opentelemetry import trace
 from configuration.config import get_app_settings, get_redis_settings
 from database.sqlalchemy_connect import create_tables, engine
 from utils.cache import redis_client, async_redis_client
-from utils.telemetry import configure_telemetry, tracer
+from utils.telemetry import configure_telemetry, tracer, meter
 from utils.logger import logger
 from api import item
-from health import health_check
+from health import health_check, metrics_router
 from exceptions_handler import (ConflictException, DatabaseException, InvalidCredentialsException, NotFoundException,
                                 UnexpectedException,
                                 BadRequestException, NotAuthorizedException, DatabaseIntegrityException)
@@ -76,9 +76,10 @@ SKIP_PATHS = {
 
 app.include_router(item.router, prefix="/api/v1/item", tags=["Item"])
 app.include_router(health_check.router, tags=["Health"])
+app.include_router(metrics_router, tags=["Metrics"])
 
 # Configurer OpenTelemetry avec l'application FastAPI
-# configure_telemetry(app)
+configure_telemetry(app)
 
 
 @app.middleware("http")
@@ -86,6 +87,22 @@ async def request_middleware(request: Request, call_next: Callable):
     path = request.url.path
     method = request.method
     request_id = request.headers.get("X-Request-ID", "")
+
+    # Create metrics counters if they don't exist yet
+    # These will be created only once and reused for subsequent requests
+    if not hasattr(request_middleware, "request_counter"):
+        request_middleware.request_counter = meter.create_counter(
+            name="http.server.request.count",
+            description="Total number of HTTP requests",
+            unit="1"
+        )
+
+    if not hasattr(request_middleware, "request_duration"):
+        request_middleware.request_duration = meter.create_histogram(
+            name="http.server.request.duration",
+            description="Duration of HTTP requests",
+            unit="s"
+        )
 
     # Ignorer la journalisation pour les chemins qui n'en ont pas besoin
     if any(path.startswith(skip) for skip in SKIP_PATHS):
@@ -101,6 +118,9 @@ async def request_middleware(request: Request, call_next: Callable):
         "path": path
     }
 
+    # Record the request in metrics
+    request_middleware.request_counter.add(1, {"method": method, "path": path})
+
     # Créer un span pour la requête
     with tracer.start_as_current_span(f"{method} {path}", attributes=log_context) as span:
         try:
@@ -109,6 +129,12 @@ async def request_middleware(request: Request, call_next: Callable):
             # Calculer la durée de la requête
             process_time = time.time() - start_time
             response.headers["X-Process-Time"] = str(process_time)
+
+            # Record the request duration in metrics
+            request_middleware.request_duration.record(
+                process_time, 
+                {"method": method, "path": path, "status_code": str(response.status_code)}
+            )
 
             # Ajouter le timing et le statut au contexte de journal
             log_context.update({
