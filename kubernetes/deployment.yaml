@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
         - name: simplefastapiapp
-          image: harbor.devgauss.com/fastapi/simplefastapiapp:35
+          image: harbor.devgauss.com/fastapi/simplefastapiapp:36
           imagePullPolicy: Always
           ports:
             - containerPort: 8000
