@@ -34,7 +34,16 @@ pipeline {
                     python3 -m venv venv
                     . venv/bin/activate
                     python3 -m pip install --upgrade pip
-                    pip install -r requirements.txt
+
+                    # Install Poetry
+                    curl -sSL https://install.python-poetry.org | python3 -
+                    export PATH="$HOME/.local/bin:$PATH"
+
+                    # Configure Poetry to use the virtual environment
+                    poetry config virtualenvs.create false
+
+                    # Install dependencies using Poetry
+                    poetry install
                 '''
             }
         }
@@ -46,16 +55,17 @@ pipeline {
                     steps {
                         sh '''
                             . venv/bin/activate
-                            pip install flake8 black isort
+                            export PATH="$HOME/.local/bin:$PATH"
+                            poetry add --group dev flake8 black isort
 
                             # Run linting
-                            flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+                            poetry run flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 
                             # Check code formatting
-                            black --check .
+                            poetry run black --check .
 
                             # Check import sorting
-                            isort --check-only .
+                            poetry run isort --check-only .
                         '''
                     }
                 }
@@ -64,13 +74,14 @@ pipeline {
                     steps {
                         sh '''
                             . venv/bin/activate
-                            pip install bandit safety
+                            export PATH="$HOME/.local/bin:$PATH"
+                            poetry add --group dev bandit safety
 
                             # Run security checks
-                            bandit -r . -x tests/
+                            poetry run bandit -r . -x tests/
 
                             # Check for known vulnerabilities
-                            safety check
+                            poetry run safety check
                         '''
                     }
                 }
@@ -85,14 +96,16 @@ pipeline {
             steps {
                 sh '''
                     . venv/bin/activate
+                    export PATH="$HOME/.local/bin:$PATH"
+
                     # Install additional test dependencies if needed
-                    pip install pytest-xdist
+                    poetry add --group dev pytest-xdist pytest-cov
 
                     # Run tests with JUnit report for better visualization in Jenkins
-                    pytest --junitxml=test-results.xml
+                    poetry run pytest --junitxml=test-results.xml
 
                     # Run tests with coverage reporting
-                    pytest \
+                    poetry run pytest \
                         --cov=. \
                         --cov-report=xml:coverage.xml \
                         --cov-report=html:htmlcov \
