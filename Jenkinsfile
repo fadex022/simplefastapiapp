@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    triggers {
+        githubPush()
+    }
+
     environment {
         PROJECT = "fastapi"
         REPOSITORY = "simplefastapiapp"
