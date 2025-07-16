@@ -165,7 +165,7 @@ pipeline {
                     """
 
                     // Commit and push the changes
-                    withCredentials([usernamePassword(credentialsId: 'git-credentials', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
+                    withCredentials([usernamePassword(credentialsId: 'fadel_github_creds', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
                         sh """
                             git config user.email "jenkins@devgauss.com"
                             git config user.name "Jenkins"
