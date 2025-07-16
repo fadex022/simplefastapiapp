@@ -91,51 +91,17 @@ def cache(ttl: int = None, prefix: str = None):
                 cached_value = await async_redis_client.get(cache_key)
                 if cached_value:
                     logger.debug(f"Cache hit for {cache_key}")
-                    # Deserialize the cached value
-                    data = json.loads(cached_value)
-
-                    # Check if the function returns a StandardResponse
-                    return_type = func.__annotations__.get('return')
-                    if return_type and hasattr(return_type, '__name__') and return_type.__name__ == 'StandardResponse':
-                        from models.response.StandardResponse import StandardResponse
-                        # Reconstruct StandardResponse object
-                        if isinstance(data, dict):
-                            return StandardResponse(**data)
-                        elif isinstance(data, str):
-                            # Handle case where data is a string
-                            logger.debug(f"Converting string data to dict for StandardResponse")
-                            return StandardResponse(data={"response": data}, status="success", message=None)
-                        else:
-                            # For other types, create a default StandardResponse
-                            logger.warning(f"Unexpected data type in cache: {type(data)}")
-                            return StandardResponse(data={"cached_value": data}, status="success", message=None)
-                    else:
-                        # For other return types, just return the deserialized JSON
-                        return data
+                    return json.loads(cached_value)
 
                 logger.debug(f"Cache miss for {cache_key}")
                 # Execute the function
                 result = await func(*args, **kwargs)
 
-                # Process the result for caching
-                try:
-                    # Check if result is a StandardResponse
-                    if hasattr(result, 'to_dict'):
-                        # Use to_dict method for StandardResponse objects
-                        serialized = json.dumps(result.to_dict())
-                    else:
-                        # For other types, use default serialization
-                        serialized = json.dumps(result, default=str)
-                except Exception as e:
-                    logger.warning(f"Error serializing data: {str(e)}")
-                    # Fallback to string representation
-                    serialized = json.dumps(str(result))
-
                 # Cache the result
                 await async_redis_client.setex(
                     cache_key,
                     ttl,
-                    serialized
+                    result.to_dict()
                 )
                 return result
 
@@ -158,51 +124,17 @@ def cache(ttl: int = None, prefix: str = None):
                 cached_value = redis_client.get(cache_key)
                 if cached_value:
                     logger.debug(f"Cache hit for {cache_key}")
-                    # Deserialize the cached value
-                    data = json.loads(cached_value)
-
-                    # Check if the function returns a StandardResponse
-                    return_type = func.__annotations__.get('return')
-                    if return_type and hasattr(return_type, '__name__') and return_type.__name__ == 'StandardResponse':
-                        from models.response.StandardResponse import StandardResponse
-                        # Reconstruct StandardResponse object
-                        if isinstance(data, dict):
-                            return StandardResponse(**data)
-                        elif isinstance(data, str):
-                            # Handle case where data is a string
-                            logger.debug(f"Converting string data to dict for StandardResponse")
-                            return StandardResponse(data={"response": data}, status="success", message=None)
-                        else:
-                            # For other types, create a default StandardResponse
-                            logger.warning(f"Unexpected data type in cache: {type(data)}")
-                            return StandardResponse(data={"cached_value": data}, status="success", message=None)
-                    else:
-                        # For other return types, just return the deserialized JSON
-                        return data
+                    return json.loads(cached_value)
 
                 logger.debug(f"Cache miss for {cache_key}")
                 # Execute the function
                 result = func(*args, **kwargs)
 
-                # Process the result for caching
-                try:
-                    # Check if result is a StandardResponse
-                    if hasattr(result, 'to_dict'):
-                        # Use to_dict method for StandardResponse objects
-                        serialized = json.dumps(result.to_dict())
-                    else:
-                        # For other types, use default serialization
-                        serialized = json.dumps(result, default=str)
-                except Exception as e:
-                    logger.warning(f"Error serializing data: {str(e)}")
-                    # Fallback to string representation
-                    serialized = json.dumps(str(result))
-
                 # Cache the result
                 redis_client.setex(
                     cache_key,
                     ttl,
-                    serialized
+                    result.to_dict()
                 )
                 return result
 
