@@ -26,6 +26,11 @@ pipeline {
     }
 
     stages {
+        when {
+            not {
+                changelog '.*\\[skip ci\\].*'
+            }
+        }
         stage('Checkout') {
             steps {
                 checkout scm
