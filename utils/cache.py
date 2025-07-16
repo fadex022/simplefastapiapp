@@ -91,36 +91,42 @@ def cache(ttl: int = None, prefix: str = None):
                 cached_value = await async_redis_client.get(cache_key)
                 if cached_value:
                     logger.debug(f"Cache hit for {cache_key}")
-                    return json.loads(cached_value)
+                    # Deserialize the cached value
+                    data = json.loads(cached_value)
+
                     # Check if the function returns a StandardResponse
-                    # return_type = func.__annotations__.get('return')
-                    # if return_type and hasattr(return_type, '__name__') and return_type.__name__ == 'StandardResponse':
-                    #     from models.response.StandardResponse import StandardResponse
-                    #     # Deserialize and convert to StandardResponse
-                    #     data = json.loads(cached_value)
-                    #     return StandardResponse(**data)
-                    # else:
-                    #     # For other return types, just return the deserialized JSON
-                    #     return json.loads(cached_value)
+                    return_type = func.__annotations__.get('return')
+                    if return_type and hasattr(return_type, '__name__') and return_type.__name__ == 'StandardResponse':
+                        from models.response.StandardResponse import StandardResponse
+                        # Reconstruct StandardResponse object
+                        return StandardResponse(**data)
+                    else:
+                        # For other return types, just return the deserialized JSON
+                        return data
 
                 logger.debug(f"Cache miss for {cache_key}")
                 # Execute the function
                 result = await func(*args, **kwargs)
-                #
-                # # Process the result for caching
-                # try:
-                #     # Use our enhanced encoder with to_dict support
-                #     serialized = json.dumps(result, default=str)
-                # except Exception as e:
-                #     logger.warning(f"Error serializing data: {str(e)}")
-                #     # Fallback to string representation
-                #     serialized = json.dumps(result, default=str)
+
+                # Process the result for caching
+                try:
+                    # Check if result is a StandardResponse
+                    if hasattr(result, 'to_dict'):
+                        # Use to_dict method for StandardResponse objects
+                        serialized = json.dumps(result.to_dict())
+                    else:
+                        # For other types, use default serialization
+                        serialized = json.dumps(result, default=str)
+                except Exception as e:
+                    logger.warning(f"Error serializing data: {str(e)}")
+                    # Fallback to string representation
+                    serialized = json.dumps(str(result))
 
                 # Cache the result
                 await async_redis_client.setex(
                     cache_key,
                     ttl,
-                    result
+                    serialized
                 )
                 return result
 
@@ -143,36 +149,42 @@ def cache(ttl: int = None, prefix: str = None):
                 cached_value = redis_client.get(cache_key)
                 if cached_value:
                     logger.debug(f"Cache hit for {cache_key}")
-                    return json.loads(cached_value)
+                    # Deserialize the cached value
+                    data = json.loads(cached_value)
+
                     # Check if the function returns a StandardResponse
-                    # return_type = func.__annotations__.get('return')
-                    # if return_type and hasattr(return_type, '__name__') and return_type.__name__ == 'StandardResponse':
-                    #     from models.response.StandardResponse import StandardResponse
-                    #     # Deserialize and convert to StandardResponse
-                    #     data = json.loads(cached_value)
-                    #     return StandardResponse(**data)
-                    # else:
-                    #     # For other return types, just return the deserialized JSON
-                    #     return json.loads(cached_value)
+                    return_type = func.__annotations__.get('return')
+                    if return_type and hasattr(return_type, '__name__') and return_type.__name__ == 'StandardResponse':
+                        from models.response.StandardResponse import StandardResponse
+                        # Reconstruct StandardResponse object
+                        return StandardResponse(**data)
+                    else:
+                        # For other return types, just return the deserialized JSON
+                        return data
 
                 logger.debug(f"Cache miss for {cache_key}")
                 # Execute the function
                 result = func(*args, **kwargs)
 
                 # Process the result for caching
-                # try:
-                #     # Use our enhanced encoder with to_dict support
-                #     serialized = json.dumps(result, default=str)
-                # except Exception as e:
-                #     logger.warning(f"Error serializing data: {str(e)}")
-                #     # Fallback to string representation
-                #     serialized = json.dumps(result, default=str)
+                try:
+                    # Check if result is a StandardResponse
+                    if hasattr(result, 'to_dict'):
+                        # Use to_dict method for StandardResponse objects
+                        serialized = json.dumps(result.to_dict())
+                    else:
+                        # For other types, use default serialization
+                        serialized = json.dumps(result, default=str)
+                except Exception as e:
+                    logger.warning(f"Error serializing data: {str(e)}")
+                    # Fallback to string representation
+                    serialized = json.dumps(str(result))
 
                 # Cache the result
                 redis_client.setex(
                     cache_key,
                     ttl,
-                    result
+                    serialized
                 )
                 return result
 
