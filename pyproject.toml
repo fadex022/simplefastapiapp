@@ -56,6 +56,7 @@ dependencies = [
 ]
 
 [tool.poetry]
+package-mode = false
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.1"
