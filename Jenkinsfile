@@ -166,33 +166,37 @@ pipeline {
 
                     // Commit and push the changes
                     withCredentials([usernamePassword(credentialsId: 'fadel_github_creds', passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
-                        sh """
-                            git config user.email "jenkins@devgauss.com"
-                            git config user.name "Jenkins"
+                        // Configure Git
+                        sh 'git config user.email "jenkins@devgauss.com"'
+                        sh 'git config user.name "Jenkins"'
 
-                            # Check if there are changes to commit
+                        // Check if there are changes to commit
+                        sh """
                             if git diff --quiet kubernetes/deployment.yaml; then
                                 echo "No changes to deployment.yaml, skipping commit and push"
+                                exit 0
+                            fi
+
+                            git add kubernetes/deployment.yaml
+                            git commit -m "Update deployment image to ${env.BUILD_ID} [skip ci]"
+                        """
+
+                        // Get the repository URL and handle different formats
+                        sh """
+                            REPO_URL=\$(git config --get remote.origin.url)
+                            BRANCH="${env.BRANCH_NAME}"
+
+                            if [ "\$(echo \$REPO_URL | grep -c '^https://')" -eq 1 ]; then
+                                # For HTTPS URLs
+                                git push https://\$GIT_USERNAME:\$GIT_PASSWORD@\$(echo \$REPO_URL | sed 's|https://||') HEAD:\$BRANCH
+                            elif [ "\$(echo \$REPO_URL | grep -c '^git@')" -eq 1 ]; then
+                                # For SSH URLs, convert to HTTPS with credentials
+                                DOMAIN=\$(echo \$REPO_URL | sed -E 's|git@([^:]+):.*|\\1|')
+                                REPO_PATH=\$(echo \$REPO_URL | sed -E 's|git@[^:]+:(.*)|\\1|')
+                                git push https://\$GIT_USERNAME:\$GIT_PASSWORD@\$DOMAIN/\$REPO_PATH HEAD:\$BRANCH
                             else
-                                git add kubernetes/deployment.yaml
-                                git commit -m "Update deployment image to ${env.BUILD_ID} [skip ci]"
-
-                                # Get the repository URL from git config
-                                REPO_URL=\$(git config --get remote.origin.url)
-
-                                # Handle different URL formats (HTTPS or SSH)
-                                if [[ \$REPO_URL == https://* ]]; then
-                                    # For HTTPS URLs
-                                    REPO_URL_WITH_CREDS=\$(echo \$REPO_URL | sed 's|https://|https://${GIT_USERNAME}:${GIT_PASSWORD}@|')
-                                elif [[ \$REPO_URL == git@* ]]; then
-                                    # For SSH URLs, convert to HTTPS with credentials
-                                    REPO_URL_WITH_CREDS=\$(echo \$REPO_URL | sed 's|git@\\(.*\\):\\(.*\\)|https://${GIT_USERNAME}:${GIT_PASSWORD}@\\1/\\2|')
-                                else
-                                    echo "Unsupported Git URL format"
-                                    exit 1
-                                fi
-
-                                git push \$REPO_URL_WITH_CREDS HEAD:${env.BRANCH_NAME}
+                                echo "Unsupported Git URL format"
+                                exit 1
                             fi
                         """
                     }
