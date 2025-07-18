@@ -101,7 +101,7 @@ def cache(ttl: int = None, prefix: str = None):
                 await async_redis_client.setex(
                     cache_key,
                     ttl,
-                    result.to_dict()
+                    json.dumps(result.to_dict())
                 )
                 return result
 
@@ -134,7 +134,7 @@ def cache(ttl: int = None, prefix: str = None):
                 redis_client.setex(
                     cache_key,
                     ttl,
-                    result.to_dict()
+                    json.dumps(result.to_dict())
                 )
                 return result
 
