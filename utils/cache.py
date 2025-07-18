@@ -99,10 +99,10 @@ def cache(ttl: int = None, prefix: str = None):
             try:
                 cached_value = await async_redis_client.get(cache_key)
                 if cached_value:
-                    logger.debug(f"Cache hit for {cache_key}")
+                    logger.info(f"Cache hit for {cache_key}")
                     return json.loads(cached_value)
 
-                logger.debug(f"Cache miss for {cache_key}")
+                logger.info(f"Cache miss for {cache_key}")
                 # Execute the function
                 result = await func(*args, **kwargs)
 
@@ -132,10 +132,10 @@ def cache(ttl: int = None, prefix: str = None):
             try:
                 cached_value = redis_client.get(cache_key)
                 if cached_value:
-                    logger.debug(f"Cache hit for {cache_key}")
+                    logger.info(f"Cache hit for {cache_key}")
                     return json.loads(cached_value)
 
-                logger.debug(f"Cache miss for {cache_key}")
+                logger.info(f"Cache miss for {cache_key}")
                 # Execute the function
                 result = func(*args, **kwargs)
 
@@ -178,7 +178,7 @@ async def invalidate_cache(prefix: str, pattern: str = "*"):
         if keys:
             # Delete all matching keys
             await async_redis_client.delete(*keys)
-            logger.debug(f"Invalidated {len(keys)} cache entries with prefix {prefix}")
+            logger.info(f"Invalidated {len(keys)} cache entries with prefix {prefix}")
     except redis.RedisError as e:
         logger.error(f"Redis error in invalidate_cache: {str(e)}")
     except Exception as e:
