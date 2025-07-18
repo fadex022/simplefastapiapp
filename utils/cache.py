@@ -2,6 +2,7 @@ import redis
 import json
 import functools
 import asyncio
+from datetime import datetime
 from typing import Any, Callable, Tuple
 
 import redis.exceptions
@@ -10,6 +11,14 @@ from redis.asyncio import Redis as AsyncRedis
 
 from configuration.config import get_redis_settings
 from utils.logger import logger
+
+
+class DateTimeEncoder(json.JSONEncoder):
+    """Custom JSON encoder that handles datetime objects by converting them to ISO format strings."""
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        return super().default(obj)
 
 # Get Redis settings
 redis_settings = get_redis_settings()
@@ -101,7 +110,7 @@ def cache(ttl: int = None, prefix: str = None):
                 await async_redis_client.setex(
                     cache_key,
                     ttl,
-                    json.dumps(result.to_dict())
+                    json.dumps(result.to_dict(), cls=DateTimeEncoder)
                 )
                 return result
 
@@ -134,7 +143,7 @@ def cache(ttl: int = None, prefix: str = None):
                 redis_client.setex(
                     cache_key,
                     ttl,
-                    json.dumps(result.to_dict())
+                    json.dumps(result.to_dict(), cls=DateTimeEncoder)
                 )
                 return result
 
@@ -198,7 +207,7 @@ def cache_health_check() -> Tuple[bool, str]:
         # Set a test value
         test_key = "health:check"
         test_value = {"status": "ok", "timestamp": "now"}
-        redis_client.setex(test_key, 10, json.dumps(test_value))
+        redis_client.setex(test_key, 10, json.dumps(test_value, cls=DateTimeEncoder))
 
         # Get the value back
         result = redis_client.get(test_key)
@@ -222,7 +231,7 @@ async def async_cache_health_check() -> Tuple[bool, str]:
         # Set a test value
         test_key = "health:check:async"
         test_value = {"status": "ok", "timestamp": "now"}
-        await async_redis_client.setex(test_key, 10, json.dumps(test_value))
+        await async_redis_client.setex(test_key, 10, json.dumps(test_value, cls=DateTimeEncoder))
 
         # Get the value back
         result = await async_redis_client.get(test_key)
