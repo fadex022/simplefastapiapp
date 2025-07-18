@@ -79,7 +79,7 @@ app.include_router(health_check.router, tags=["Health"])
 app.include_router(metrics_router, tags=["Metrics"])
 
 # Configurer OpenTelemetry avec l'application FastAPI
-configure_telemetry(app)
+configure_telemetry()
 
 
 @app.middleware("http")
